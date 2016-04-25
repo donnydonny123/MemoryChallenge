@@ -1,5 +1,6 @@
 package com.example.tsao.memorychallenge;
 
+import android.content.Intent;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -30,9 +31,11 @@ public class MainActivity extends AppCompatActivity {
     Button start_bt;
     TextView timer;
     int click_count;
-    int last_id;
+    boolean clickable;
+    int last_id, now_id;
     int score;
     int stage;//0 begin 1 start 2 end
+    public final static String SCORE = "SCORE";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,7 +50,17 @@ public class MainActivity extends AppCompatActivity {
         start_bt.setOnClickListener(start);
         timer = (TextView) findViewById(R.id.timer);
         timer1 = new Timer();
-        stage=0;
+        timer1.schedule(task,0,1000);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        timer.setText("Get ready... 5 seconds to memorize");
+        stage = 0;
+        start_bt.setClickable(true);
+        count_down = 0;
+        clickable = true;
     }
     private String getAns(int id){
         for (int i=0;i<16;i++)
@@ -128,6 +141,7 @@ public class MainActivity extends AppCompatActivity {
             if (stage != 0)
                 return;
             stage = 1;
+            start_bt.setClickable(false);
             random_shuffle();
             for (int i=0;i<16;i++){
                 TextView bt = (TextView) findViewById(bt_id[i]);
@@ -135,39 +149,48 @@ public class MainActivity extends AppCompatActivity {
                 bt.setText(ans[i]);
             }
             tsec = 5; count_down = -1;
-            timer1.schedule(task,0,1000);
-
         }
     };
     private void endGame(){
         count_down = 0;
         timer.setText("You WIN!\nYour time is "+genTime());
         stage = 2;
-        timer1.cancel();
+        // timer1.cancel();
+        Intent in = new Intent();
+        in.setClass(this, win_activity.class);
+        in.putExtra(SCORE, genTime());
+        startActivity(in);
     }
     private View.OnClickListener flip = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
             Log.d("Press","Button Pressed "+v.getId());
+            if (!clickable)
+                return ;
             TextView bt = (TextView) findViewById(v.getId());
             if (bt.getText()!="")
                 return;
             bt.setText(getAns(v.getId()));
             click_count ++;
+            now_id = v.getId();
 
             if (click_count == 1)
                 last_id = v.getId();
             else if (click_count == 2){
                 TextView bt2 = (TextView) findViewById(last_id);
                 if (bt2.getText() != bt.getText()){
-                    try{
-                        Thread.sleep(700);
-                    }
-                    catch(InterruptedException e){
-                        e.printStackTrace();}
-                    Log.d("DELAY","delay"+bt.getText());
-                    bt.setText("");
-                    bt2.setText("");
+                    clickable = false;
+                    android.os.Handler HH = new android.os.Handler();
+                    HH.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            TextView bb = (TextView) findViewById(now_id);
+                            bb.setText("");
+                            bb = (TextView) findViewById(last_id);
+                            bb.setText("");
+                            clickable = true;
+                        }
+                    }, 500);
                 }
                 else {
                     score ++;
