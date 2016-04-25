@@ -155,6 +155,10 @@ public class MainActivity extends AppCompatActivity {
         count_down = 0;
         timer.setText("You WIN!\nYour time is "+genTime());
         stage = 2;
+        for (int i=0;i<16;i++){
+            TextView bt = (TextView) findViewById(bt_id[i]);
+            bt.setVisibility(View.INVISIBLE);
+        }
         // timer1.cancel();
         Intent in = new Intent();
         in.setClass(this, win_activity.class);
